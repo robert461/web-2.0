@@ -1,9 +1,9 @@
 (function () {
 
-    var peerJsHost = "";
-    var peerJsPort = "";
-    var peerJsPath = "";
-    var iceServer = "";
+    var peerJsHost = "ec2-18-195-162-139.eu-central-1.compute.amazonaws.com";
+    var peerJsPort = "9000";
+    var peerJsPath = "/myapp";
+    var iceServer = "stun:stun.l.google.com:19302";
 
     var lastPeerId = null;
     var peer = null; // own peer object
@@ -18,6 +18,8 @@
     var acceptIncomingConnectionButton = document.getElementById('accept-incoming-connection-button');
     var declineIncomingConnectionButton = document.getElementById('decline-incoming-connection-button');
     var closeConnectionButton = document.getElementById('close-connection-button');
+    var writeToLocalStorageButton = document.getElementById('write-local-storage-button');
+    var syncToLocalStorageButton = document.getElementById('sync-local-storage-button');
 
     var newPeerIdModal = new bootstrap.Modal(document.getElementById('enterNewPeerIdModal'));
     var acceptIncomingConnectionModal = new bootstrap.Modal(document.getElementById('acceptIncomingConnectionModal'));
@@ -31,18 +33,157 @@
     var currentlyHandledConnection = undefined;
 
     var currentConnectionAccepted = false;
+    var clientStartedHandshake = false;
+    var handshakeIsRunning = false;
 
 
-    /**
-     * Create the Peer object for our end of the connection.
-     *
-     * Sets up callbacks that handle any events related to our
-     * peer object.
-     */
     function initialize() {
 
         getNewPeer();
 
+        addElementEventListeners();
+    };
+
+    function getNewPeer() {
+        if (connection !== null) {
+            connection.close();
+        }
+
+        peer = new Peer({
+            host: peerJsHost,
+            port: peerJsPort,
+            path: peerJsPath,
+            config: {'iceServers': [
+                { urls: iceServer }
+            ]},
+            debug: 2
+        });
+
+        setPeerListeners(peer);
+        setStatusToWaiting();
+
+        currentConnectionAccepted = false;
+    }
+
+    function connectToExistingPeer(peerId) {
+        setStatusToConnecting();
+
+        if (connection) {
+            connection.close();
+        }
+
+        connection = peer.connect(peerId, {
+            reliable: true
+        });
+
+        clientStartedHandshake = true;
+
+        currentConnectionAccepted = false;
+
+        setConnectionListeners(connection);
+    }
+
+    function handleNextUnhandledConnection() {
+        if (unhandledIncomingConnections.length > 0) {
+            clientStartedHandshake = false;
+
+            firstUnhandledConnecton = unhandledIncomingConnections.shift();
+            
+            showAcceptConnectionModal(firstUnhandledConnecton);
+        }
+    }
+
+    function showAcceptConnectionModal(newConnection) {
+        handshakeIsRunning = true;
+
+        if (currentlyHandledConnection) {
+            currentlyHandledConnection.close();
+        }
+
+        currentlyHandledConnection = newConnection;
+
+        acceptIncomingConnectionText.innerHTML = `Accept connection with ${newConnection.peer}?`;
+        acceptIncomingConnectionModal.show();
+    }
+
+    function setPeerListeners(peer) {
+        peer.on('open', function (id) {
+            // Workaround for peer.reconnect deleting previous id
+            if (peer.id === null) {
+                console.log('Received null id from peer open');
+                peer.id = lastPeerId;
+            } else {
+                lastPeerId = peer.id;
+            }
+
+            idField.value = `${peer.id}`;
+        });
+
+        peer.on('connection', function (newConnection) {
+
+            // TODO weird connection closing going on when new connection attempts are received while the accept modal is open
+
+            if (newPeerIdModal._isShown || acceptIncomingConnectionModal._isShown || handshakeIsRunning) {
+                unhandledIncomingConnections.push(newConnection);
+
+            } else {
+                clientStartedHandshake = false;
+
+                showAcceptConnectionModal(newConnection);
+            }
+        });
+
+        peer.on('close', function() {
+            alert('Peer close unhandled')
+            connection = null;
+            setStatusToWaiting();
+        });
+
+        peer.on('error', function (err) {
+            console.log(err);
+            alert('' + err);
+        });
+    }
+
+    function setConnectionListeners(newConnection) {
+        newConnection.on('data', function (data) {
+
+            if (!currentConnectionAccepted) {
+                if (data === 'ACCEPT') {
+                    currentConnectionAccepted = true;
+                    setStatusToConnected();
+                    idField.value = `${connection.peer}`;
+
+                    if (clientStartedHandshake) {
+                        connection.send('ACCEPT');
+                    }
+                }
+
+                if (data === 'DECLINE') {
+                    currentConnectionAccepted = false;
+                    connection.close();
+                    setStatusToDeclined();
+                    
+                    handshakeIsRunning = false;
+                    handleNextUnhandledConnection();
+                }
+            } else {
+                localStorageItems = JSON.parse(data);
+
+                for (var item in localStorageItems) {
+                    localStorage.setItem(`${item}`, localStorageItems[item]);
+                }
+            }
+        });
+
+        newConnection.on('close', function () {            
+            connection = null;
+            setStatusToWaiting();
+            idField.value = peer.id;
+        });
+    }
+
+    function addElementEventListeners() {
         newIdButton.addEventListener('click', function () {
             getNewPeer();
         });
@@ -70,7 +211,7 @@
 
             connection.send('ACCEPT');
 
-            setStatusButtonToConnected();
+            setStatusToConnected();
         });
 
         declineIncomingConnectionButton.addEventListener('click', function () {
@@ -80,150 +221,55 @@
         });
 
         acceptIncomingConnectionModalElement.addEventListener('hidden.bs.modal', function () {
-            handleFirstUnhandledConnection();
+            handleNextUnhandledConnection();
         });
 
         newPeerIdModalElement.addEventListener('hidden.bs.modal', function () {
-            handleFirstUnhandledConnection();
+            handleNextUnhandledConnection();
         });
 
         closeConnectionButton.addEventListener('click', function () {
             if (connection) {
                 connection.close();
-                setStatusButtonToWaiting();
+                setStatusToWaiting();
                 idField.value = peer.id;
             }
         });
-    };
 
-    function getNewPeer() {
-        if (connection !== null) {
-            connection.close();
-        }
-
-        peer = new Peer({
-            host: peerJsHost,
-            port: peerJsPort,
-            path: peerJsPath,
-            config: {'iceServers': [
-                { urls: iceServer }
-            ]},
-            debug: 2
+        writeToLocalStorageButton.addEventListener('click', function () {
+            localStorage.setItem('Web 2.0', `Projekt ${Date.now()}`);
+            localStorage.setItem('Lorem ipsum', `${Math.random()}`);
         });
 
-        setPeerListeners(peer);
-        setStatusButtonToWaiting();
-    }
+        syncToLocalStorageButton.addEventListener('click', function () {
+            if (connection && connection.open) {
+                localStorageString = JSON.stringify(window.localStorage);
 
-    function connectToExistingPeer(peerId) {
-        setStatusButtonToConnecting();
-
-        if (connection) {
-            connection.close();
-        }
-
-        connection = peer.connect(peerId, {
-            reliable: true
-        });
-
-        currentConnectionAccepted = false;
-
-        setConnectionListeners(connection);
-    }
-
-    function setPeerListeners(peer) {
-        peer.on('open', function (id) {
-            // Workaround for peer.reconnect deleting previous id
-            if (peer.id === null) {
-                console.log('Received null id from peer open');
-                peer.id = lastPeerId;
-            } else {
-                lastPeerId = peer.id;
-            }
-
-            idField.value = `${peer.id}`;
-        });
-
-        peer.on('connection', function (newConnection) {
-
-            if (newPeerIdModal._isShown || acceptIncomingConnectionModal._isShown) {
-                unhandledIncomingConnections.push(newConnection);
-
-            } else {
-                showAcceptConnectionModal(newConnection);
+                connection.send(localStorageString);
             }
         });
-
-        peer.on('close', function() {
-            alert('Peer close unhandled')
-            connection = null;
-            setStatusButtonToWaiting();
-        });
-
-        peer.on('error', function (err) {
-            console.log(err);
-            alert('' + err);
-        });
     }
 
-    function setConnectionListeners(newConnection) {
-        newConnection.on('data', function (data) {
-            if (!currentConnectionAccepted) {
-                if (data === 'ACCEPT') {
-                    currentConnectionAccepted = true;
-                    setStatusButtonToConnected();
-                    idField.value = `${connection.peer}`;
-                }
-
-                if (data === 'DECLINE') {
-                    connection.close();
-                    setStatusButtonToDeclined();
-                }
-            }
-        });
-
-        newConnection.on('close', function () {            
-            connection = null;
-            setStatusButtonToWaiting();
-            idField.value = peer.id;
-        });
-    }
-
-    function handleFirstUnhandledConnection() {
-        if (unhandledIncomingConnections.length > 0) {
-            firstUnhandledConnecton = unhandledIncomingConnections.shift();
-            
-            showAcceptConnectionModal(firstUnhandledConnecton);
-        }
-    }
-
-    function showAcceptConnectionModal(newConnection) {
-        if (currentlyHandledConnection) {
-            currentlyHandledConnection.close();
-        }
-
-        currentlyHandledConnection = newConnection;
-
-        acceptIncomingConnectionText.innerHTML = `Accept connection with ${newConnection.peer}?`;
-        acceptIncomingConnectionModal.show();
-    }
-
-    function setStatusButtonToWaiting() {
+    function setStatusToWaiting() {
         setStatusButtonWarning();
         statusButton.innerHTML = 'Waiting';
     }
 
-    function setStatusButtonToConnecting() {
+    function setStatusToConnecting() {
+        handshakeIsRunning = true;
         setStatusButtonWarning();
         statusButton.innerHTML = 'Connecting';
     }
 
-    function setStatusButtonToConnected() {
+    function setStatusToConnected() {
+        handshakeIsRunning = false;
+        handleNextUnhandledConnection();
+
         setStatusButtonSuccess();
         statusButton.innerHTML = 'Connected';
     }
 
-    function setStatusButtonToDeclined() {
+    function setStatusToDeclined() {
         setStatusButtonDanger();
         statusButton.innerHTML = 'Declined';
     }
@@ -263,7 +309,6 @@
             statusButton.classList.add('btn-danger');
         }
     }
-
 
     initialize();
 })();
