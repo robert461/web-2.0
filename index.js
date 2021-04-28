@@ -89,6 +89,7 @@
             if (connection) {
                 connection.close();
                 setStatusButtonToWaiting();
+                idField.value = peer.id;
             }
         });
     };
@@ -182,6 +183,7 @@
         newConnection.on('close', function () {            
             connection = null;
             setStatusButtonToWaiting();
+            idField.value = peer.id;
         });
     }
 
