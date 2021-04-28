@@ -29,6 +29,8 @@
     var unhandledIncomingConnections = [];
     var currentlyHandledConnection = undefined;
 
+    var currentConnectionAccepted = false;
+
     /**
      * Create the Peer object for our end of the connection.
      *
@@ -57,13 +59,25 @@
                 connection.close();
             }
 
+            // TODO send accept to other peer
+
             connection = currentlyHandledConnection;
+
+            currentConnectionAccepted = false;
+
+            setConnectionListeners(connection);
+
+            connection.send('ACCEPT');
+
+            setStatusButtonToConnected();
         });
 
         declineIncomingConnectionButton.addEventListener('click', function () {
             acceptIncomingConnectionModal.hide();
 
-            currentlyHandledConnection.close();
+            // TODO send decline to other peer
+
+            currentlyHandledConnection.send('DECLINE');
         });
 
         acceptIncomingConnectionModalElement.addEventListener('hidden.bs.modal', function () {
@@ -91,20 +105,23 @@
         });
 
         setPeerListeners(peer);
-        setStatusButton();
+        setStatusButtonToWaiting();
     }
 
     function connectToExistingPeer(peerId) {
-        statusButton.innerHTML = 'Connecting';
+        setStatusButtonToConnecting();
+
+        if (connection) {
+            connection.close();
+        }
 
         connection = peer.connect(peerId, {
             reliable: true
         });
 
-        idField.value = `${peerId}`;
-        statusButton.innerHTML = 'Connected';
-        statusButton.classList.remove('btn-warning');
-        statusButton.classList.add('btn-success');
+        currentConnectionAccepted = false;
+
+        setConnectionListeners(connection);
     }
 
     function setPeerListeners(peer) {
@@ -188,15 +205,55 @@
         //     peer._lastServerId = lastPeerId;
         //     peer.reconnect();
         // });
-        // peer.on('close', function() {
-        //     connection = null;
-        //     status.innerHTML = "Connection destroyed. Please refresh";
-        //     console.log('Connection destroyed');
-        // });
-        // peer.on('error', function (err) {
-        //     console.log(err);
-        //     alert('' + err);
-        // });
+
+        peer.on('close', function() {
+            connection = null;
+        });
+
+        peer.on('error', function (err) {
+            console.log(err);
+            alert('' + err);
+        });
+    }
+
+    function setConnectionListeners(newConnection) {
+        newConnection.on('data', function (data) {
+            if (!currentConnectionAccepted) {
+                if (data === 'ACCEPT') {
+                    currentConnectionAccepted = true;
+                    setStatusButtonToConnected();
+                    idField.value = `${connection.peer}`;
+                }
+
+                if (data === 'DECLINE') {
+                    connection.close();
+                    setStatusButtonToDeclined();
+                }
+            }
+
+            // var cueString = "<span class=\"cueMsg\">Cue: </span>";
+            // switch (data) {
+            //     case 'Go':
+            //         go();
+            //         addMessage(cueString + data);
+            //         break;
+            //     case 'Fade':
+            //         fade();
+            //         addMessage(cueString + data);
+            //         break;
+            //     case 'Off':
+            //         off();
+            //         addMessage(cueString + data);
+            //         break;
+            //     case 'Reset':
+            //         reset();
+            //         addMessage(cueString + data);
+            //         break;
+            //     default:
+            //         addMessage("<span class=\"peerMsg\">Peer: </span>" + data);
+            //         break;
+            // };
+        });
     }
 
     function handleFirstUnhandledConnection() {
@@ -208,18 +265,70 @@
     }
 
     function showAcceptConnectionModal(newConnection) {
+        if (currentlyHandledConnection) {
+            currentlyHandledConnection.close();
+        }
+
         currentlyHandledConnection = newConnection;
 
         acceptIncomingConnectionText.innerHTML = `Accept connection with ${newConnection.peer}?`;
         acceptIncomingConnectionModal.show();
     }
 
-    function setStatusButton() {
+    function setStatusButtonToWaiting() {
+        setStatusButtonWarning();
+        statusButton.innerHTML = 'Waiting';
+    }
+
+    function setStatusButtonToConnecting() {
+        setStatusButtonWarning();
+        statusButton.innerHTML = 'Connecting';
+    }
+
+    function setStatusButtonToConnected() {
+        setStatusButtonSuccess();
+        statusButton.innerHTML = 'Connected';
+    }
+
+    function setStatusButtonToDeclined() {
+        setStatusButtonDanger();
+        statusButton.innerHTML = 'Declined';
+    }
+
+    function setStatusButtonSuccess() {
+        if (statusButton.className.match(/(?:^|\s)btn-warning(?!\S)/)) {
+            statusButton.classList.remove('btn-warning');
+            statusButton.classList.add('btn-success');
+        }
+
+        if (statusButton.className.match(/(?:^|\s)btn-danger(?!\S)/)) {
+            statusButton.classList.remove('btn-danger');
+            statusButton.classList.add('btn-success');
+        }
+    }
+
+    function setStatusButtonWarning() {
         if (statusButton.className.match(/(?:^|\s)btn-success(?!\S)/)) {
             statusButton.classList.remove('btn-success');
             statusButton.classList.add('btn-warning');
         }
-        statusButton.innerHTML = 'Waiting';
+
+        if (statusButton.className.match(/(?:^|\s)btn-danger(?!\S)/)) {
+            statusButton.classList.remove('btn-danger');
+            statusButton.classList.add('btn-warning');
+        }
+    }
+
+    function setStatusButtonDanger() {
+        if (statusButton.className.match(/(?:^|\s)btn-success(?!\S)/)) {
+            statusButton.classList.remove('btn-danger');
+            statusButton.classList.add('btn-danger');
+        }
+
+        if (statusButton.className.match(/(?:^|\s)btn-warning(?!\S)/)) {
+            statusButton.classList.remove('btn-danger');
+            statusButton.classList.add('btn-danger');
+        }
     }
 
     /**
