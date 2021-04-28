@@ -16,6 +16,7 @@
     var statusButton = document.getElementById('status-button');
     var acceptIncomingConnectionButton = document.getElementById('accept-incoming-connection-button');
     var declineIncomingConnectionButton = document.getElementById('decline-incoming-connection-button');
+    var closeConnectionButton = document.getElementById('close-connection-button');
 
     var newPeerIdModal = new bootstrap.Modal(document.getElementById('enterNewPeerIdModal'));
     var acceptIncomingConnectionModal = new bootstrap.Modal(document.getElementById('acceptIncomingConnectionModal'));
@@ -59,8 +60,6 @@
                 connection.close();
             }
 
-            // TODO send accept to other peer
-
             connection = currentlyHandledConnection;
 
             currentConnectionAccepted = false;
@@ -75,8 +74,6 @@
         declineIncomingConnectionButton.addEventListener('click', function () {
             acceptIncomingConnectionModal.hide();
 
-            // TODO send decline to other peer
-
             currentlyHandledConnection.send('DECLINE');
         });
 
@@ -86,6 +83,13 @@
 
         newPeerIdModalElement.addEventListener('hidden.bs.modal', function () {
             handleFirstUnhandledConnection();
+        });
+
+        closeConnectionButton.addEventListener('click', function () {
+            if (connection) {
+                connection.close();
+                setStatusButtonToWaiting();
+            }
         });
     };
 
@@ -147,67 +151,10 @@
             }
         });
 
-        //     c.on('open', function() {
-        //         c.send("Sender does not accept incoming connections");
-        //         setTimeout(function() { c.close(); }, 500);
-        //     });
-
-        //     // Allow only a single connection
-        //     if (conn && conn.open) {
-        //         c.on('open', function() {
-        //             c.send("Already connected to another client");
-        //             setTimeout(function() { c.close(); }, 500);
-        //         });
-        //         return;
-        //     }
-            
-        //     conn = c;
-        //     console.log("Connected to: " + conn.peer);
-        //     status.innerHTML = "Connected";
-        //     ready();
-
-        //     conn.on('data', function (data) {
-        //         console.log("Data recieved");
-        //         var cueString = "<span class=\"cueMsg\">Cue: </span>";
-        //         switch (data) {
-        //             case 'Go':
-        //                 go();
-        //                 addMessage(cueString + data);
-        //                 break;
-        //             case 'Fade':
-        //                 fade();
-        //                 addMessage(cueString + data);
-        //                 break;
-        //             case 'Off':
-        //                 off();
-        //                 addMessage(cueString + data);
-        //                 break;
-        //             case 'Reset':
-        //                 reset();
-        //                 addMessage(cueString + data);
-        //                 break;
-        //             default:
-        //                 addMessage("<span class=\"peerMsg\">Peer: </span>" + data);
-        //                 break;
-        //         };
-        //     });
-        //     conn.on('close', function () {
-        //         status.innerHTML = "Connection reset<br>Awaiting connection...";
-        //         conn = null;
-        //     });
-        // });
-        // peer.on('disconnected', function () {
-        //     status.innerHTML = "Connection lost. Please reconnect";
-        //     console.log('Connection lost. Please reconnect');
-
-        //     // Workaround for peer.reconnect deleting previous id
-        //     peer.id = lastPeerId;
-        //     peer._lastServerId = lastPeerId;
-        //     peer.reconnect();
-        // });
-
         peer.on('close', function() {
+            alert('Peer close unhandled')
             connection = null;
+            setStatusButtonToWaiting();
         });
 
         peer.on('error', function (err) {
@@ -230,29 +177,11 @@
                     setStatusButtonToDeclined();
                 }
             }
+        });
 
-            // var cueString = "<span class=\"cueMsg\">Cue: </span>";
-            // switch (data) {
-            //     case 'Go':
-            //         go();
-            //         addMessage(cueString + data);
-            //         break;
-            //     case 'Fade':
-            //         fade();
-            //         addMessage(cueString + data);
-            //         break;
-            //     case 'Off':
-            //         off();
-            //         addMessage(cueString + data);
-            //         break;
-            //     case 'Reset':
-            //         reset();
-            //         addMessage(cueString + data);
-            //         break;
-            //     default:
-            //         addMessage("<span class=\"peerMsg\">Peer: </span>" + data);
-            //         break;
-            // };
+        newConnection.on('close', function () {            
+            connection = null;
+            setStatusButtonToWaiting();
         });
     }
 
