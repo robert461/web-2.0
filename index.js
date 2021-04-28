@@ -14,8 +14,20 @@
     var newIdButton = document.getElementById('new-id-button');
     var submitNewPeerIdButton = document.getElementById('submit-new-peer-id-button');
     var statusButton = document.getElementById('status-button');
+    var acceptIncomingConnectionButton = document.getElementById('accept-incoming-connection-button');
+    var declineIncomingConnectionButton = document.getElementById('decline-incoming-connection-button');
 
     var newPeerIdModal = new bootstrap.Modal(document.getElementById('enterNewPeerIdModal'));
+    var acceptIncomingConnectionModal = new bootstrap.Modal(document.getElementById('acceptIncomingConnectionModal'));
+    
+    var newPeerIdModalElement = document.getElementById('enterNewPeerIdModal');
+    var acceptIncomingConnectionModalElement = document.getElementById('acceptIncomingConnectionModal');
+
+    var acceptIncomingConnectionText = document.getElementById('accept-incoming-connection-text');
+
+    
+    var unhandledIncomingConnections = [];
+    var currentlyHandledConnection = undefined;
 
     /**
      * Create the Peer object for our end of the connection.
@@ -24,7 +36,6 @@
      * peer object.
      */
     function initialize() {
-        // Create own peer object with connection to self hosted PeerJS Server
         getNewPeer();
 
         newIdButton.addEventListener('click', function () {
@@ -38,14 +49,36 @@
 
             connectToExistingPeer(peerId);
         });
+
+        acceptIncomingConnectionButton.addEventListener('click', function () {
+            acceptIncomingConnectionModal.hide();
+
+            if (connection) {
+                connection.close();
+            }
+
+            connection = currentlyHandledConnection;
+        });
+
+        declineIncomingConnectionButton.addEventListener('click', function () {
+            acceptIncomingConnectionModal.hide();
+
+            currentlyHandledConnection.close();
+        });
+
+        acceptIncomingConnectionModalElement.addEventListener('hidden.bs.modal', function () {
+            handleFirstUnhandledConnection();
+        });
+
+        newPeerIdModalElement.addEventListener('hidden.bs.modal', function () {
+            handleFirstUnhandledConnection();
+        });
     };
 
     function getNewPeer() {
         if (connection !== null) {
             connection.close();
         }
-
-        console.log(connection);
 
         peer = new Peer({
             //host: TODO
@@ -86,31 +119,99 @@
 
             idField.value = `${peer.id}`;
         });
-        peer.on('connection', function (c) {
-            // Disallow incoming connections
-            c.on('open', function() {
-                c.send("Sender does not accept incoming connections");
-                setTimeout(function() { c.close(); }, 500);
-            });
-        });
-        peer.on('disconnected', function () {
-            status.innerHTML = "Connection lost. Please reconnect";
-            console.log('Connection lost. Please reconnect');
 
-            // Workaround for peer.reconnect deleting previous id
-            peer.id = lastPeerId;
-            peer._lastServerId = lastPeerId;
-            peer.reconnect();
+        peer.on('connection', function (newConnection) {
+
+            if (newPeerIdModal._isShown || acceptIncomingConnectionModal._isShown) {
+                unhandledIncomingConnections.push(newConnection);
+
+            } else {
+                showAcceptConnectionModal(newConnection);
+            }
         });
-        peer.on('close', function() {
-            connection = null;
-            status.innerHTML = "Connection destroyed. Please refresh";
-            console.log('Connection destroyed');
-        });
-        peer.on('error', function (err) {
-            console.log(err);
-            alert('' + err);
-        });
+
+        //     c.on('open', function() {
+        //         c.send("Sender does not accept incoming connections");
+        //         setTimeout(function() { c.close(); }, 500);
+        //     });
+
+        //     // Allow only a single connection
+        //     if (conn && conn.open) {
+        //         c.on('open', function() {
+        //             c.send("Already connected to another client");
+        //             setTimeout(function() { c.close(); }, 500);
+        //         });
+        //         return;
+        //     }
+            
+        //     conn = c;
+        //     console.log("Connected to: " + conn.peer);
+        //     status.innerHTML = "Connected";
+        //     ready();
+
+        //     conn.on('data', function (data) {
+        //         console.log("Data recieved");
+        //         var cueString = "<span class=\"cueMsg\">Cue: </span>";
+        //         switch (data) {
+        //             case 'Go':
+        //                 go();
+        //                 addMessage(cueString + data);
+        //                 break;
+        //             case 'Fade':
+        //                 fade();
+        //                 addMessage(cueString + data);
+        //                 break;
+        //             case 'Off':
+        //                 off();
+        //                 addMessage(cueString + data);
+        //                 break;
+        //             case 'Reset':
+        //                 reset();
+        //                 addMessage(cueString + data);
+        //                 break;
+        //             default:
+        //                 addMessage("<span class=\"peerMsg\">Peer: </span>" + data);
+        //                 break;
+        //         };
+        //     });
+        //     conn.on('close', function () {
+        //         status.innerHTML = "Connection reset<br>Awaiting connection...";
+        //         conn = null;
+        //     });
+        // });
+        // peer.on('disconnected', function () {
+        //     status.innerHTML = "Connection lost. Please reconnect";
+        //     console.log('Connection lost. Please reconnect');
+
+        //     // Workaround for peer.reconnect deleting previous id
+        //     peer.id = lastPeerId;
+        //     peer._lastServerId = lastPeerId;
+        //     peer.reconnect();
+        // });
+        // peer.on('close', function() {
+        //     connection = null;
+        //     status.innerHTML = "Connection destroyed. Please refresh";
+        //     console.log('Connection destroyed');
+        // });
+        // peer.on('error', function (err) {
+        //     console.log(err);
+        //     alert('' + err);
+        // });
+    }
+
+    function handleFirstUnhandledConnection() {
+        if (unhandledIncomingConnections.length > 0) {
+            firstUnhandledConnecton = unhandledIncomingConnections.shift();
+            
+            showAcceptConnectionModal(firstUnhandledConnecton);
+        }
+    }
+
+    function showAcceptConnectionModal(newConnection) {
+        currentlyHandledConnection = newConnection;
+
+        acceptIncomingConnectionText.innerHTML = `Accept connection with ${newConnection.peer}?`;
+        acceptIncomingConnectionModal.show();
     }
 
     function setStatusButton() {
