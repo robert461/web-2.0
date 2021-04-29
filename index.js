@@ -33,8 +33,6 @@
     var currentlyHandledConnection = undefined;
 
     var currentConnectionAccepted = false;
-    var clientStartedHandshake = false;
-    var handshakeIsRunning = false;
 
 
     function initialize() {
@@ -76,8 +74,6 @@
             reliable: true
         });
 
-        clientStartedHandshake = true;
-
         currentConnectionAccepted = false;
 
         setConnectionListeners(connection);
@@ -85,8 +81,6 @@
 
     function handleNextUnhandledConnection() {
         if (unhandledIncomingConnections.length > 0) {
-            clientStartedHandshake = false;
-
             firstUnhandledConnecton = unhandledIncomingConnections.shift();
             
             showAcceptConnectionModal(firstUnhandledConnecton);
@@ -94,7 +88,6 @@
     }
 
     function showAcceptConnectionModal(newConnection) {
-        handshakeIsRunning = true;
 
         if (currentlyHandledConnection) {
             currentlyHandledConnection.close();
@@ -123,11 +116,10 @@
 
             // TODO weird connection closing going on when new connection attempts are received while the accept modal is open
 
-            if (newPeerIdModal._isShown || acceptIncomingConnectionModal._isShown || handshakeIsRunning) {
+            if (newPeerIdModal._isShown || acceptIncomingConnectionModal._isShown) {
                 unhandledIncomingConnections.push(newConnection);
 
             } else {
-                clientStartedHandshake = false;
 
                 showAcceptConnectionModal(newConnection);
             }
@@ -153,10 +145,6 @@
                     currentConnectionAccepted = true;
                     setStatusToConnected();
                     idField.value = `${connection.peer}`;
-
-                    if (clientStartedHandshake) {
-                        connection.send('ACCEPT');
-                    }
                 }
 
                 if (data === 'DECLINE') {
@@ -164,7 +152,6 @@
                     connection.close();
                     setStatusToDeclined();
                     
-                    handshakeIsRunning = false;
                     handleNextUnhandledConnection();
                 }
             } else {
@@ -205,7 +192,7 @@
 
             connection = currentlyHandledConnection;
 
-            currentConnectionAccepted = false;
+            currentConnectionAccepted = true; // TODO true?
 
             setConnectionListeners(connection);
 
@@ -256,13 +243,11 @@
     }
 
     function setStatusToConnecting() {
-        handshakeIsRunning = true;
         setStatusButtonWarning();
         statusButton.innerHTML = 'Connecting';
     }
 
     function setStatusToConnected() {
-        handshakeIsRunning = false;
         handleNextUnhandledConnection();
 
         setStatusButtonSuccess();
