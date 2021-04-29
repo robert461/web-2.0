@@ -26,7 +26,7 @@
     var acceptIncomingConnectionModal = new bootstrap.Modal(document.getElementById('acceptIncomingConnectionModal'));
     
     var newPeerIdModalElement = document.getElementById('enterNewPeerIdModal');
-    //var acceptIncomingConnectionModalElement = document.getElementById('acceptIncomingConnectionModal');
+    var acceptIncomingConnectionModalElement = document.getElementById('acceptIncomingConnectionModal');
 
     var acceptIncomingConnectionText = document.getElementById('accept-incoming-connection-text');
     
@@ -172,6 +172,12 @@
         });
     }
 
+    function declineCurrentlyHandledConnection() {
+        currentlyHandledConnection.send('DECLINE');
+
+        handleNextUnhandledConnection();
+    }
+
     function addElementEventListeners() {
         newIdButton.addEventListener('click', function () {
             getNewPeer();
@@ -186,6 +192,8 @@
         });
 
         acceptIncomingConnectionButton.addEventListener('click', function () {
+            currentConnectionAccepted = true;
+
             acceptIncomingConnectionModal.hide();
 
             if (connection) {
@@ -194,7 +202,6 @@
 
             connection = currentlyHandledConnection;
 
-            currentConnectionAccepted = true;
 
             setConnectionListeners(connection);
 
@@ -207,14 +214,16 @@
 
         declineIncomingConnectionButton.addEventListener('click', function () {
             acceptIncomingConnectionModal.hide();
-
-            currentlyHandledConnection.send('DECLINE');
-
-            handleNextUnhandledConnection();
         });
 
         newPeerIdModalElement.addEventListener('hidden.bs.modal', function () {
             handleNextUnhandledConnection();
+        });
+
+        acceptIncomingConnectionModalElement.addEventListener('hidden.bs.modal', function () {
+            if (!currentConnectionAccepted) {
+                declineCurrentlyHandledConnection();
+            }
         });
 
         closeConnectionButton.addEventListener('click', function () {
@@ -257,6 +266,8 @@
     }
 
     function setStatusToDeclined() {
+        // TODO successfull connection > close > new connection > decline > status not displayed properly 
+
         setStatusButtonDanger();
         statusButton.innerHTML = 'Declined';
     }
