@@ -29,6 +29,14 @@
     var acceptIncomingConnectionModalElement = document.getElementById('acceptIncomingConnectionModal');
 
     var acceptIncomingConnectionText = document.getElementById('accept-incoming-connection-text');
+    var connectToastText = document.getElementById('connect-toast-text');
+    var disconnectToastText = document.getElementById('disconnect-toast-text');
+    var syncLocalStorageText = document.getElementById('sync-local-storage-toast-text');
+
+    var toastElementList = [].slice.call(document.querySelectorAll('.toast'))
+    var toastList = toastElementList.map(function (toastElement) {
+        return new bootstrap.Toast(toastElement)
+    })
     
     var unhandledIncomingConnections = [];
     var currentlyHandledConnection = undefined;
@@ -166,9 +174,14 @@
         });
 
         newConnection.on('close', function () {            
+            toastList[1].hide();
+            disconnectToastText.innerHTML = `Disconnected from ${connectedToIdInput.value}.`;
+            toastList[1].show();
+
             connection = null;
             setStatusToWaiting();
             connectedToIdInput.value = "";
+
         });
     }
 
@@ -244,6 +257,10 @@
                 localStorageString = JSON.stringify(window.localStorage);
 
                 connection.send(localStorageString);
+
+                toastList[2].hide();
+                syncLocalStorageText.innerHTML = `Synced local storage with ${connection.peer}.`;
+                toastList[2].show();
             }
         });
     }
@@ -259,6 +276,10 @@
     }
 
     function setStatusToConnected() {
+        toastList[0].hide();
+        connectToastText.innerHTML = `Connected to ${connection.peer}.`;
+        toastList[0].show();
+
         handleNextUnhandledConnection();
 
         setStatusButtonSuccess();
