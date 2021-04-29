@@ -26,7 +26,7 @@
     var acceptIncomingConnectionModal = new bootstrap.Modal(document.getElementById('acceptIncomingConnectionModal'));
     
     var newPeerIdModalElement = document.getElementById('enterNewPeerIdModal');
-    var acceptIncomingConnectionModalElement = document.getElementById('acceptIncomingConnectionModal');
+    //var acceptIncomingConnectionModalElement = document.getElementById('acceptIncomingConnectionModal');
 
     var acceptIncomingConnectionText = document.getElementById('accept-incoming-connection-text');
     
@@ -90,7 +90,7 @@
 
     function showAcceptConnectionModal(newConnection) {
 
-        if (currentlyHandledConnection) {
+        if (currentlyHandledConnection && connection !== currentlyHandledConnection && currentlyHandledConnection.open) {
             currentlyHandledConnection.close();
         }
 
@@ -114,8 +114,6 @@
         });
 
         peer.on('connection', function (newConnection) {
-
-            // TODO weird connection closing going on when new connection attempts are received while the accept modal is open
 
             if (newPeerIdModal._isShown || acceptIncomingConnectionModal._isShown) {
                 unhandledIncomingConnections.push(newConnection);
@@ -211,9 +209,7 @@
             acceptIncomingConnectionModal.hide();
 
             currentlyHandledConnection.send('DECLINE');
-        });
 
-        acceptIncomingConnectionModalElement.addEventListener('hidden.bs.modal', function () {
             handleNextUnhandledConnection();
         });
 
