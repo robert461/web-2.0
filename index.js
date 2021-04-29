@@ -9,8 +9,9 @@
     var peer = null; // own peer object
     var connection = null;
     
-    var idField = document.getElementById('peerjs-id-field');
+    var idInput = document.getElementById('peerjs-id-input');
     var newPeerIdInput = document.getElementById('new-peer-id-input');
+    var connectedToIdInput = document.getElementById('connected-to-id-input');
 
     var newIdButton = document.getElementById('new-id-button');
     var submitNewPeerIdButton = document.getElementById('submit-new-peer-id-button');
@@ -109,7 +110,7 @@
                 lastPeerId = peer.id;
             }
 
-            idField.value = `${peer.id}`;
+            idInput.value = `${peer.id}`;
         });
 
         peer.on('connection', function (newConnection) {
@@ -144,8 +145,11 @@
                 if (data === 'ACCEPT') {
                     currentConnectionAccepted = true;
                     setStatusToConnected();
-                    idField.value = `${connection.peer}`;
+
+                    connectedToIdInput.value = `${connection.peer}`;
                 }
+
+                // TODO check who accepts
 
                 if (data === 'DECLINE') {
                     currentConnectionAccepted = false;
@@ -166,7 +170,7 @@
         newConnection.on('close', function () {            
             connection = null;
             setStatusToWaiting();
-            idField.value = peer.id;
+            connectedToIdInput.value = "";
         });
     }
 
@@ -192,11 +196,13 @@
 
             connection = currentlyHandledConnection;
 
-            currentConnectionAccepted = true; // TODO true?
+            currentConnectionAccepted = true;
 
             setConnectionListeners(connection);
 
             connection.send('ACCEPT');
+
+            connectedToIdInput.value = connection.peer;
 
             setStatusToConnected();
         });
@@ -219,7 +225,7 @@
             if (connection) {
                 connection.close();
                 setStatusToWaiting();
-                idField.value = peer.id;
+                connectedToIdInput.value = "";
             }
         });
 
