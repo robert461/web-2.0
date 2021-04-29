@@ -1,6 +1,6 @@
 (function () {
 
-    var peerJsHost = "ec2-18-195-162-139.eu-central-1.compute.amazonaws.com";
+    var peerJsHost = "";
     var peerJsPort = "9000";
     var peerJsPath = "/myapp";
     var iceServer = "stun:stun.l.google.com:19302";
