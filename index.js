@@ -98,6 +98,7 @@
     }
 
     function showAcceptConnectionModal(newConnection) {
+        currentConnectionAccepted = false;
 
         if (currentlyHandledConnection && connection !== currentlyHandledConnection && currentlyHandledConnection.open) {
             currentlyHandledConnection.close();
@@ -146,33 +147,46 @@
     }
 
     function setConnectionListeners(newConnection) {
-        newConnection.on('data', function (data) {
+        newConnection.on('data', function (message) {
 
-            if (!currentConnectionAccepted) {
-                if (data === 'ACCEPT') {
-                    currentConnectionAccepted = true;
-                    setStatusToConnected();
+            if (message.hasOwnProperty('messageType') && message.hasOwnProperty('connectionId')) {
 
-                    connectedToIdInput.value = `${connection.peer}`;
-                    connectionIdInput.value = `${connection.connectionId}`;
-                }
+                if (!currentConnectionAccepted) {
+    
+                    if (message.messageType === 'accept' && message.connectionId === connection.connectionId) {
+                        currentConnectionAccepted = true;
+                        setStatusToConnected();
+    
+                        connectedToIdInput.value = `${connection.peer}`;
+                        connectionIdInput.value = `${connection.connectionId}`;
+                    }
 
-                // TODO check who accepts
+                    if (message.messageType === 'decline' && message.connectionId === connection.connectionId) {
+                        currentConnectionAccepted = false;
+                        connection.close();
+                        setStatusToDeclined();
+                        
+                        handleNextUnhandledConnection();
+                    }
 
-                if (data === 'DECLINE') {
-                    currentConnectionAccepted = false;
-                    connection.close();
-                    setStatusToDeclined();
-                    
-                    handleNextUnhandledConnection();
-                }
-            } else {
-                localStorageItems = JSON.parse(data);
+                } else {
+                    if (message.hasOwnProperty('data')) {
+                        switch(message.messageType) {
+                            case 'localStorage':
+                                localStorageItems = JSON.parse(message.data);
 
-                for (var item in localStorageItems) {
-                    localStorage.setItem(`${item}`, localStorageItems[item]);
+                                for (var item in localStorageItems) {
+                                    localStorage.setItem(`${item}`, localStorageItems[item]);
+                                }
+
+                                break;
+                            default:
+                                break;
+                        }
+                    }
                 }
             }
+
         });
 
         newConnection.on('close', function () {            
@@ -189,7 +203,8 @@
     }
 
     function declineCurrentlyHandledConnection() {
-        currentlyHandledConnection.send('DECLINE');
+
+        sendDeclineMessage(currentlyHandledConnection);
 
         handleNextUnhandledConnection();
     }
@@ -220,7 +235,7 @@
 
             setConnectionListeners(connection);
 
-            connection.send('ACCEPT');
+            sendAcceptMessage(connection.connectionId);
 
             connectedToIdInput.value = connection.peer;
             connectionIdInput.value = `${connection.connectionId}`;
@@ -261,13 +276,35 @@
             if (connection && connection.open) {
                 localStorageString = JSON.stringify(window.localStorage);
 
-                connection.send(localStorageString);
+                sendDataMessage('localStorage', window.localStorage);
 
                 toastList[2].hide();
                 syncLocalStorageText.innerHTML = `Synced local storage with ${connection.peer}.`;
                 toastList[2].show();
             }
         });
+    }
+
+    function sendDataMessage(messageType, data) {
+        dataString = JSON.stringify(data);
+
+        const message = {messageType: messageType, connectionId: connection.connectionId, data: dataString}
+
+        connection.send(message);
+    }
+
+    function sendAcceptMessage(connectionId) {
+
+        const message = {messageType: 'accept', connectionId: connectionId}
+
+        connection.send(message);
+    }
+    
+    function sendDeclineMessage(currentConnection) {
+
+        const message = {messageType: 'decline', connectionId: currentConnection.connectionId}
+
+        currentConnection.send(message);
     }
 
     function setStatusToWaiting() {
