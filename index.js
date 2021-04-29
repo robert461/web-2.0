@@ -12,6 +12,7 @@
     var idInput = document.getElementById('peerjs-id-input');
     var newPeerIdInput = document.getElementById('new-peer-id-input');
     var connectedToIdInput = document.getElementById('connected-to-id-input');
+    var connectionIdInput = document.getElementById('connection-id-input');
 
     var newIdButton = document.getElementById('new-id-button');
     var submitNewPeerIdButton = document.getElementById('submit-new-peer-id-button');
@@ -153,6 +154,7 @@
                     setStatusToConnected();
 
                     connectedToIdInput.value = `${connection.peer}`;
+                    connectionIdInput.value = `${connection.connectionId}`;
                 }
 
                 // TODO check who accepts
@@ -181,6 +183,7 @@
             connection = null;
             setStatusToWaiting();
             connectedToIdInput.value = "";
+            connectionIdInput.value = "";
 
         });
     }
@@ -215,12 +218,12 @@
 
             connection = currentlyHandledConnection;
 
-
             setConnectionListeners(connection);
 
             connection.send('ACCEPT');
 
             connectedToIdInput.value = connection.peer;
+            connectionIdInput.value = `${connection.connectionId}`;
 
             setStatusToConnected();
         });
@@ -243,7 +246,9 @@
             if (connection) {
                 connection.close();
                 setStatusToWaiting();
+
                 connectedToIdInput.value = "";
+                connectionIdInput.value = "";
             }
         });
 
