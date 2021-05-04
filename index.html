@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+		<!-- Bootstrap CSS -->
+		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6" crossorigin="anonymous">
+		<link href="assets/fontawesome/css/all.css" rel="stylesheet">
+
+        <title>Peer-to-Peer System</title>
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+		<div class="container">
+			<h1 class="pt-5" style="text-align: center;">Peer-to-Peer System</h1>
+
+			<div class="row pt-5">
+				<div class="col-2" style="display: flex; justify-content: center; align-items: center;">
+					<span><b>ID:</b></span>
+				</div>
+
+				<div class="col-5">
+					<input type="text" id="peerjs-id-input" class="form-control" placeholder="could not get id from brokering server" readonly>
+				</div>
+
+				<div class="col-auto">
+					<button class="btn btn-warning" id="status-button" disabled>
+						<i class="fas fa-exclamation-circle"></i>
+						Waiting
+					</button>
+				</div>
+
+				<div class="col-auto">
+					<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#enterNewPeerIdModal">
+						<i class="fas fa-edit"></i>
+						Enter Id
+					</button>
+				</div>
+
+				<div class="col-auto">
+					<button class="btn btn-primary" id="new-id-button">
+						<i class="fas fa-sync"></i>
+						New Id
+					</button>
+				</div>
+			</div>
+
+			<div class="row pt-2">
+				<div class="col-2" style=" display: flex; justify-content: center; align-items: center;">
+					<span><b>Connected to:</b></span>
+				</div>
+
+				<div class="col-5">
+					<input type="text" id="connected-to-id-input" class="form-control" placeholder="not connected" readonly>
+				</div>
+
+				<div class="col-auto">
+					<button class="btn btn-primary" id="close-connection-button">
+						<i class="fas fa-times"></i>
+						Close connection
+					</button>
+				</div>
+			</div>
+
+			<div class="row pt-2">
+				<div class="col-2" style=" display: flex; justify-content: center; align-items: center;">
+					<span><b>Connection id:</b></span>
+				</div>
+
+				<div class="col-5">
+					<input type="text" id="connection-id-input" class="form-control" placeholder="not connected" readonly>
+				</div>
+			</div>
+
+			<hr>
+
+			<div class="row">
+				<div class="col-3">
+					<button class="btn btn-primary" id="write-local-storage-button">
+						Write data to local storage
+					</button>
+				</div>
+
+				<div class="col-3">
+					<button class="btn btn-primary" id="sync-local-storage-button">
+						Sync local storage data
+					</button>
+				</div>
+			</div>
+
+			<div class="modal fade" id="enterNewPeerIdModal" tabindex="-1" aria-labelledby="enterNewPeerIdModalLabel" aria-hidden="true">
+				<div class="modal-dialog">
+				  <div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title">Enter existing Id</h5>
+						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					</div>
+					<div class="modal-body">
+						<input type="text" class="form-control" id="new-peer-id-input" placeholder="00000000-0000-0000-0000-000000000000">
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+						<button type="button" class="btn btn-primary" id="submit-new-peer-id-button">Use Id</button>
+					</div>
+				  </div>
+				</div>
+			  </div>
+
+			<div class="modal fade" id="acceptIncomingConnectionModal" tabindex="-1" aria-labelledby="acceptIncomingConnectionModalLabel" aria-hidden="true">
+				<div class="modal-dialog">
+				  <div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title">Accept incoming connection?</h5>
+						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					</div>
+					<div class="modal-body">
+						<span id="accept-incoming-connection-text"></span>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary" id="decline-incoming-connection-button">Decline</button>
+						<button type="button" class="btn btn-primary" id="accept-incoming-connection-button">Accept</button>
+					</div>
+				  </div>
+				</div>
+			</div>					
+		</div>
+
+		<div aria-live="polite" aria-atomic="true" class="d-flex justify-content-center align-items-center w-100">
+			<div class="toast-container position-absolute top-0 end-0 p-3">
+				<div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+					<div class="toast-header bg-success">
+						<strong class="me-auto" style="color: white">Connected</strong>
+						<button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+					</div>
+					<div class="toast-body">
+						<span id="connect-toast-text"></span>
+					</div>
+				</div>
+	
+				<div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+					<div class="toast-header bg-warning">
+						<strong class="me-auto">Disconnected</strong>
+						<button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+					</div>
+					<div class="toast-body">
+						<span id="disconnect-toast-text"></span>
+					</div>
+				</div>
+
+				<div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+					<div class="toast-header">
+						<strong class="me-auto">Synced local storage</strong>
+						<button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+					</div>
+					<div class="toast-body">
+						<span id="sync-local-storage-toast-text"></span>
+					</div>
+				</div>
+			</div>
+		</div>	
+
+
+		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js" integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf" crossorigin="anonymous"></script>
+		<script src="assets/peerjs.min.js"></script>
+		<script src="index.js"></script>
+
+    </body>
+</html>
