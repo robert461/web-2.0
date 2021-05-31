@@ -391,7 +391,7 @@
     function generateQRCode() {
         const currentUrl = window.location.href.split('?')[0]
         qrcode.clear()
-        qrcode.makeCode(currentUrl +peer.id)
+        qrcode.makeCode(currentUrl +"?peer_id=" +peer.id)
     }
 
     initialize();
