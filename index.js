@@ -1,6 +1,6 @@
 (function () {
 
-    var peerJsHost = "ec2-18-195-162-139.eu-central-1.compute.amazonaws.com";
+    var peerJsHost = "";
     var peerJsPort = "9000";
     var peerJsPath = "/myapp";
 
@@ -49,7 +49,6 @@
     function initialize() {
         getNewPeer();
         addElementEventListeners();
-        handleUrlQueryParams();
     };
 
     function handleUrlQueryParams() {
@@ -128,6 +127,7 @@
 
             idInput.value = `${peer.id}`;
             generateQRCode();
+            handleUrlQueryParams();
         });
 
         peer.on('connection', function (newConnection) {
@@ -380,7 +380,6 @@
 
     function generateQRCode() {
         qrcode = new QRCode(document.getElementById("qrcode"), {
-            //text: idInput.value,
             text: "http://web20-webrtc.s3-website.eu-central-1.amazonaws.com/?peer_id=" +peer.id,
             width: 128,
             height: 128,
