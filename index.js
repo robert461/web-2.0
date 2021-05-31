@@ -8,7 +8,7 @@
     var lastPeerId = null;
     var peer = null; // own peer object
     var connection = null;
-    
+
     var idInput = document.getElementById('peerjs-id-input');
     var newPeerIdInput = document.getElementById('new-peer-id-input');
     var connectedToIdInput = document.getElementById('connected-to-id-input');
@@ -25,7 +25,7 @@
 
     var newPeerIdModal = new bootstrap.Modal(document.getElementById('enterNewPeerIdModal'));
     var acceptIncomingConnectionModal = new bootstrap.Modal(document.getElementById('acceptIncomingConnectionModal'));
-    
+
     var newPeerIdModalElement = document.getElementById('enterNewPeerIdModal');
     var acceptIncomingConnectionModalElement = document.getElementById('acceptIncomingConnectionModal');
 
@@ -38,7 +38,9 @@
     var toastList = toastElementList.map(function (toastElement) {
         return new bootstrap.Toast(toastElement)
     })
-    
+
+    var qrcode;
+
     var unhandledIncomingConnections = [];
     var currentlyHandledConnection = undefined;
 
@@ -46,11 +48,20 @@
 
 
     function initialize() {
-
         getNewPeer();
-
+        generateQRCode();
         addElementEventListeners();
+        handleUrlQueryParams();
     };
+
+    function handleUrlQueryParams() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const connectionPeerId = urlParams.get("peer_id");
+        console.log(connectionPeerId);
+        if (connectionPeerId !== null) {
+            connectToExistingPeer(connectionPeerId);
+        }
+    }
 
     function getNewPeer() {
         if (connection !== null) {
@@ -92,7 +103,7 @@
     function handleNextUnhandledConnection() {
         if (unhandledIncomingConnections.length > 0) {
             firstUnhandledConnecton = unhandledIncomingConnections.shift();
-            
+
             showAcceptConnectionModal(firstUnhandledConnecton);
         }
     }
@@ -152,11 +163,11 @@
             if (message.hasOwnProperty('messageType') && message.hasOwnProperty('connectionId')) {
 
                 if (!currentConnectionAccepted) {
-    
+
                     if (message.messageType === 'accept' && message.connectionId === connection.connectionId) {
                         currentConnectionAccepted = true;
                         setStatusToConnected();
-    
+
                         connectedToIdInput.value = `${connection.peer}`;
                         connectionIdInput.value = `${connection.connectionId}`;
                     }
@@ -165,7 +176,7 @@
                         currentConnectionAccepted = false;
                         connection.close();
                         setStatusToDeclined();
-                        
+
                         handleNextUnhandledConnection();
                     }
 
@@ -189,7 +200,7 @@
 
         });
 
-        newConnection.on('close', function () {            
+        newConnection.on('close', function () {
             toastList[1].hide();
             disconnectToastText.innerHTML = `Disconnected from ${connectedToIdInput.value}.`;
             toastList[1].show();
@@ -299,7 +310,7 @@
 
         connection.send(message);
     }
-    
+
     function sendDeclineMessage(currentConnection) {
 
         const message = {messageType: 'decline', connectionId: currentConnection.connectionId}
@@ -329,7 +340,7 @@
     }
 
     function setStatusToDeclined() {
-        // TODO successfull connection > close > new connection > decline > status not displayed properly 
+        // TODO successfull connection > close > new connection > decline > status not displayed properly
 
         setStatusButtonDanger();
         statusButton.innerHTML = 'Declined';
@@ -369,6 +380,18 @@
             statusButton.classList.remove('btn-danger');
             statusButton.classList.add('btn-danger');
         }
+    }
+
+    function generateQRCode() {
+        qrcode = new QRCode(document.getElementById("qrcode"), {
+            //text: idInput.value,
+            text: "http://web20-webrtc.s3-website.eu-central-1.amazonaws.com/?peer_id=" +"123451" ,
+            width: 128,
+            height: 128,
+            colorDark : "#000000",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.H
+        });
     }
 
     initialize();
