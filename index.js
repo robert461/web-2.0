@@ -49,6 +49,7 @@
     function initialize() {
         getNewPeer();
         addElementEventListeners();
+        initQRCode();
     };
 
     function handleUrlQueryParams() {
@@ -377,16 +378,20 @@
             statusButton.classList.add('btn-danger');
         }
     }
-
-    function generateQRCode() {
+    function initQRCode() {
         qrcode = new QRCode(document.getElementById("qrcode"), {
-            text: "http://web20-webrtc.s3-website.eu-central-1.amazonaws.com/?peer_id=" +peer.id,
+            text: "",
             width: 128,
             height: 128,
             colorDark : "#000000",
             colorLight : "#ffffff",
             correctLevel : QRCode.CorrectLevel.H
         });
+    }
+    function generateQRCode() {
+        const currentUrl = window.location.href.split('?')[0]
+        qrcode.clear()
+        qrcode.make(currentUrl +peer.id)
     }
 
     initialize();
