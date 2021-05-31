@@ -3,7 +3,6 @@
     var peerJsHost = "";
     var peerJsPort = "9000";
     var peerJsPath = "/myapp";
-    var iceServer = "stun:stun.l.google.com:19302";
 
     var lastPeerId = null;
     var peer = null; // own peer object
@@ -61,9 +60,6 @@
             host: peerJsHost,
             port: peerJsPort,
             path: peerJsPath,
-            config: {'iceServers': [
-                { urls: iceServer }
-            ]},
             debug: 2
         });
 
