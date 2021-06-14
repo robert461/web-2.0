@@ -8,7 +8,6 @@
     var peer = null; // own peer object
     var connection = null;
 
-    var newPeerIdInput = document.getElementById('new-peer-id-input');
     var connectedToIdInput = document.getElementById('connected-to-id-input');
     var connectionIdInput = document.getElementById('connection-id-input');
 
@@ -21,6 +20,7 @@
     var writeToLocalStorageButton = document.getElementById('write-local-storage-button');
     var syncToLocalStorageButton = document.getElementById('sync-local-storage-button');
     var charsIconsSwitchButton = document.getElementById('chars-icons-switch-button');
+    var enterExistingIdButton = document.getElementById('enter-existing-id-button');
     
 
     var newPeerIdModal = new bootstrap.Modal(document.getElementById('enterNewPeerIdModal'));
@@ -35,6 +35,8 @@
     var syncLocalStorageText = document.getElementById('sync-local-storage-toast-text');
     var idSpan = document.getElementById('id-span');
 
+    var enterPeerIdModalContent = document.getElementById('enter-peer-id-modal-content');
+
     var toastElementList = [].slice.call(document.querySelectorAll('.toast'))
     var toastList = toastElementList.map(function (toastElement) {
         return new bootstrap.Toast(toastElement)
@@ -47,7 +49,7 @@
 
     var currentConnectionAccepted = false;
 
-    var useCustomId = false;
+    var useCustomId = true;
     var customIdCharacters = [
         'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 
         't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L',
@@ -89,7 +91,7 @@
             port: peerJsPort,
             path: peerJsPath,
             debug: 2,
-            useCustomId: useCustomId,
+            //useCustomId: useCustomId,
         });
 
         setPeerListeners(peer);
@@ -244,9 +246,41 @@
         submitNewPeerIdButton.addEventListener('click', function () {
             newPeerIdModal.hide();
 
-            const peerId = newPeerIdInput.value;
+            let peerId = '';
+
+            if (useCustomId) {
+
+            } else {
+                const newPeerIdInput = document.getElementById('new-peer-id-input');
+                peerId = newPeerIdInput.value;
+            }
 
             connectToExistingPeer(peerId);
+        });
+
+        enterExistingIdButton.addEventListener('click', function () {
+            let content = '';
+
+            if (useCustomId) {
+
+                content += ' \
+                <div class="row row-cols-5">';
+
+                customIdCharacters.forEach(c => {
+                    content += ' <div class="col">';
+                    content += '<button type="button" class="btn btn-secondary my-1" name="emojiKeyboard" style="width: 5rem">';
+                    content += getIconFromCharacter(c);
+                    content += '</button>';
+                    content += '</div>'
+                });
+
+                content += '</div>';
+
+            } else {
+                content = '<input type="text" class="form-control" id="new-peer-id-input" placeholder="00000000-0000-0000-0000-000000000000">';
+            }
+
+            enterPeerIdModalContent.innerHTML = content;
         });
 
         acceptIncomingConnectionButton.addEventListener('click', function () {

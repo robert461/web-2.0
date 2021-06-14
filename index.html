@@ -68,7 +68,7 @@
 				</div>
 
 				<div class="col-auto">
-					<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#enterNewPeerIdModal">
+					<button type="button" class="btn btn-primary" id="enter-existing-id-button" data-bs-toggle="modal" data-bs-target="#enterNewPeerIdModal">
 						<i class="fas fa-edit"></i>
 						Enter Id
 					</button>
@@ -115,7 +115,7 @@
 						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 					</div>
 					<div class="modal-body">
-						<input type="text" class="form-control" id="new-peer-id-input" placeholder="00000000-0000-0000-0000-000000000000">
+						<div id="enter-peer-id-modal-content"></div>
 					</div>
 					<div class="modal-footer">
 						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
