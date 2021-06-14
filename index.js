@@ -32,6 +32,7 @@
     var connectToastText = document.getElementById('connect-toast-text');
     var disconnectToastText = document.getElementById('disconnect-toast-text');
     var syncLocalStorageText = document.getElementById('sync-local-storage-toast-text');
+    var idSpan = document.getElementById('id-span');
 
     var toastElementList = [].slice.call(document.querySelectorAll('.toast'))
     var toastList = toastElementList.map(function (toastElement) {
@@ -44,6 +45,22 @@
     var currentlyHandledConnection = undefined;
 
     var currentConnectionAccepted = false;
+
+    var useCustomId = false;
+    var customIdCharacters = [
+        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 
+        't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L',
+        'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '4', 
+        '5', '6', '7', '8', '9'];
+    var customIdIcons = [
+        'ambulance', 'anchor', 'angry', 'apple-alt', 'beer', 'bell', 'bone', 'bread-slice', 'bus', 'car', 
+        'car-side', 'cat', 'chess-knight', 'cocktail', 'coffee', 'crow', 'dizzy', 'dog', 'dove', 'dragon', 
+        'feather', 'fish', 'flushed', 'frog', 'frown', 'gas-pump', 'ghost', 'grimace', 'grin', 'grin-beam', 
+        'grin-squint', 'grin-squint-tears', 'grin-tears', 'grin-tongue', 'grin-tongue-wink', 'hamburger', 
+        'hand-point-left', 'hand-point-right', 'handshake', 'heart', 'hippo', 'horse', 'ice-cream', 'kiss', 
+        'kiwi-bird', 'laugh-wink', 'meh', 'meh-blank', 'meh-rolling-eyes', 'motorcycle', 'otter', 'paw', 
+        'phone', 'pizza-slice', 'smile', 'spider', 'surprise', 'thumbs-down', 'thumbs-up', 'truck', 
+        'wheelchair', 'wine-bottle']
 
 
     function initialize() {
@@ -126,7 +143,7 @@
                 lastPeerId = peer.id;
             }
 
-            idInput.value = `${peer.id}`;
+            idSpan.innerHTML = getIdAsHtmlContent();
             generateQRCode();
             handleUrlQueryParams();
         });
@@ -388,10 +405,38 @@
             correctLevel : QRCode.CorrectLevel.H
         });
     }
+
     function generateQRCode() {
         const currentUrl = window.location.href.split('?')[0]
         qrcode.clear()
         qrcode.makeCode(currentUrl +"?peer_id=" +peer.id)
+    }
+
+    function getIdAsHtmlContent() {
+
+        if (useCustomId) {
+            const characters = [...peer.id];
+
+            let icons = '';
+
+            characters.forEach(c => {
+                const icon = getIconFromCharacter(c);
+
+                icons += icon;
+            });
+
+            return icons;
+        }
+
+        return `${peer.id}`;
+    }
+
+    function getIconFromCharacter(character) {
+        const characterIndex = customIdCharacters.indexOf(character);
+
+        var icon = `<i class="fas fa-${customIdIcons[characterIndex]} fa-2x px-2"></i>`;
+        
+        return icon;
     }
 
     initialize();
