@@ -21,6 +21,8 @@
     var closeConnectionButton = document.getElementById('close-connection-button');
     var writeToLocalStorageButton = document.getElementById('write-local-storage-button');
     var syncToLocalStorageButton = document.getElementById('sync-local-storage-button');
+    var charsIconsSwitchButton = document.getElementById('chars-icons-switch-button');
+    
 
     var newPeerIdModal = new bootstrap.Modal(document.getElementById('enterNewPeerIdModal'));
     var acceptIncomingConnectionModal = new bootstrap.Modal(document.getElementById('acceptIncomingConnectionModal'));
@@ -87,7 +89,8 @@
             host: peerJsHost,
             port: peerJsPort,
             path: peerJsPath,
-            debug: 2
+            debug: 2,
+            useCustomId: useCustomId,
         });
 
         setPeerListeners(peer);
@@ -307,6 +310,12 @@
                 syncLocalStorageText.innerHTML = `Synced local storage with ${connection.peer}.`;
                 toastList[2].show();
             }
+        });
+
+        charsIconsSwitchButton.addEventListener('click', function () {
+            useCustomId = !useCustomId;
+
+            getNewPeer();
         });
     }
 
