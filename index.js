@@ -8,7 +8,6 @@
     var peer = null; // own peer object
     var connection = null;
 
-    var idInput = document.getElementById('peerjs-id-input');
     var newPeerIdInput = document.getElementById('new-peer-id-input');
     var connectedToIdInput = document.getElementById('connected-to-id-input');
     var connectionIdInput = document.getElementById('connection-id-input');
@@ -132,7 +131,7 @@
 
         currentlyHandledConnection = newConnection;
 
-        acceptIncomingConnectionText.innerHTML = `Accept connection with ${newConnection.peer}?`;
+        acceptIncomingConnectionText.innerHTML = `Accept connection with <br>${getIdAsHtmlContent(newConnection.peer)}?`;
         acceptIncomingConnectionModal.show();
     }
 
@@ -146,7 +145,7 @@
                 lastPeerId = peer.id;
             }
 
-            idSpan.innerHTML = getIdAsHtmlContent();
+            idSpan.innerHTML = getIdAsHtmlContent(peer.id);
             generateQRCode();
             handleUrlQueryParams();
         });
@@ -421,10 +420,10 @@
         qrcode.makeCode(currentUrl +"?peer_id=" +peer.id)
     }
 
-    function getIdAsHtmlContent() {
+    function getIdAsHtmlContent(id) {
 
         if (useCustomId) {
-            const characters = [...peer.id];
+            const characters = [...id];
 
             let icons = '';
 
