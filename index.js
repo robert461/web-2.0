@@ -93,7 +93,7 @@
             port: peerJsPort,
             path: peerJsPath,
             debug: 2,
-            //useCustomId: useCustomId,
+            useCustomId: useCustomId,
         });
 
         setPeerListeners(peer);
