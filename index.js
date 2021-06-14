@@ -65,6 +65,8 @@
         'phone', 'pizza-slice', 'smile', 'spider', 'surprise', 'thumbs-down', 'thumbs-up', 'truck', 
         'wheelchair', 'wine-bottle']
 
+    var enteredEmojiCharacters = '';
+
 
     function initialize() {
         getNewPeer();
@@ -259,28 +261,16 @@
         });
 
         enterExistingIdButton.addEventListener('click', function () {
-            let content = '';
 
             if (useCustomId) {
 
-                content += ' \
-                <div class="row row-cols-5">';
-
-                customIdCharacters.forEach(c => {
-                    content += ' <div class="col">';
-                    content += '<button type="button" class="btn btn-secondary my-1" name="emojiKeyboard" style="width: 5rem">';
-                    content += getIconFromCharacter(c);
-                    content += '</button>';
-                    content += '</div>'
-                });
-
-                content += '</div>';
+                buildEmojiKeyboard();
 
             } else {
-                content = '<input type="text" class="form-control" id="new-peer-id-input" placeholder="00000000-0000-0000-0000-000000000000">';
+                const content = '<input type="text" class="form-control" id="new-peer-id-input" placeholder="00000000-0000-0000-0000-000000000000">';
+                enterPeerIdModalContent.innerHTML = content;
             }
 
-            enterPeerIdModalContent.innerHTML = content;
         });
 
         acceptIncomingConnectionButton.addEventListener('click', function () {
@@ -349,6 +339,37 @@
             useCustomId = !useCustomId;
 
             getNewPeer();
+        });
+    }
+
+    function buildEmojiKeyboard() {
+        let content = '<div class="row row-cols-5">';
+
+        customIdCharacters.forEach(c => {
+            content += '<div class="col">';
+            content += '<button type="button" class="btn btn-secondary my-1" name="emojiKeyboardButton" style="width: 5rem">';
+            content += getIconFromCharacter(c);
+            content += '</button>';
+            content += '</div>'
+        });
+
+        content += '</div>';
+
+        enteredEmojiCharacters = '';
+
+        enterPeerIdModalContent.innerHTML = content;
+
+        const keyboardButtons = document.getElementsByName('emojiKeyboardButton');
+
+        keyboardButtons.forEach(kb => {
+
+            const character = kb.children[0].attributes.getNamedItem('char').nodeValue;
+
+            kb.addEventListener('click', function (event) {
+                enteredEmojiCharacters += character;
+
+                console.log(enteredEmojiCharacters);
+            });
         });
     }
 
@@ -476,7 +497,7 @@
     function getIconFromCharacter(character) {
         const characterIndex = customIdCharacters.indexOf(character);
 
-        var icon = `<i class="fas fa-${customIdIcons[characterIndex]} fa-2x px-2"></i>`;
+        var icon = `<i class="fas fa-${customIdIcons[characterIndex]} fa-2x px-2" char="${character}"></i>`;
         
         return icon;
     }
