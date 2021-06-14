@@ -77,7 +77,7 @@
     function handleUrlQueryParams() {
         const urlParams = new URLSearchParams(window.location.search);
         const connectionPeerId = urlParams.get("peer_id");
-        console.log(connectionPeerId);
+        
         if (connectionPeerId !== null) {
             connectToExistingPeer(connectionPeerId);
         }
@@ -251,7 +251,7 @@
             let peerId = '';
 
             if (useCustomId) {
-
+                peerId = enteredEmojiCharacters;
             } else {
                 const newPeerIdInput = document.getElementById('new-peer-id-input');
                 peerId = newPeerIdInput.value;
@@ -343,7 +343,16 @@
     }
 
     function buildEmojiKeyboard() {
-        let content = '<div class="row row-cols-5">';
+        let content = '';
+
+        content += '\
+            <div class="card">\
+                <div class="card-body">\
+                    <span class="card-text" id="entered-id-span"></span>\
+                </div>\
+            </div>';
+
+        content += '<div class="row row-cols-5">';
 
         customIdCharacters.forEach(c => {
             content += '<div class="col">';
@@ -359,16 +368,19 @@
 
         enterPeerIdModalContent.innerHTML = content;
 
+        const enteredIdSpan = document.getElementById('entered-id-span');
+        enteredIdSpan.innerHTML = " ";
+
         const keyboardButtons = document.getElementsByName('emojiKeyboardButton');
 
         keyboardButtons.forEach(kb => {
 
             const character = kb.children[0].attributes.getNamedItem('char').nodeValue;
 
-            kb.addEventListener('click', function (event) {
+            kb.addEventListener('click', function () {
                 enteredEmojiCharacters += character;
 
-                console.log(enteredEmojiCharacters);
+                enteredIdSpan.innerHTML = getIdAsHtmlContent(enteredEmojiCharacters);
             });
         });
     }
