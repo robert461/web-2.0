@@ -69,6 +69,12 @@
 
 
     function initialize() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const useCustomIdParameter = urlParams.get("use_custom_id");
+        if (useCustomIdParameter) {
+            useCustomId = useCustomIdParameter;
+        }
+
         getNewPeer();
         addElementEventListeners();
         initQRCode();
@@ -77,7 +83,7 @@
     function handleUrlQueryParams() {
         const urlParams = new URLSearchParams(window.location.search);
         const connectionPeerId = urlParams.get("peer_id");
-        useCustomId = urlParams.get("use_custom_id");
+        
         
         if (connectionPeerId !== null) {
             connectToExistingPeer(connectionPeerId);
