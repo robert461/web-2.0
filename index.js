@@ -77,6 +77,7 @@
     function handleUrlQueryParams() {
         const urlParams = new URLSearchParams(window.location.search);
         const connectionPeerId = urlParams.get("peer_id");
+        useCustomId = urlParams.get("use_custom_id");
         
         if (connectionPeerId !== null) {
             connectToExistingPeer(connectionPeerId);
@@ -477,14 +478,14 @@
             height: 128,
             colorDark : "#000000",
             colorLight : "#ffffff",
-            correctLevel : QRCode.CorrectLevel.H
+            correctLevel : QRCode.CorrectLevel.H,
         });
     }
 
     function generateQRCode() {
-        const currentUrl = window.location.href.split('?')[0]
-        qrcode.clear()
-        qrcode.makeCode(currentUrl +"?peer_id=" +peer.id)
+        const currentUrl = window.location.href.split('?')[0];
+        qrcode.clear();
+        qrcode.makeCode(currentUrl + '?peer_id=' + peer.id + '&use_custom_id=' + useCustomId);
     }
 
     function getIdAsHtmlContent(id) {
