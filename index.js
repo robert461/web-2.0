@@ -82,8 +82,8 @@
 
     function handleUrlQueryParams() {
         const urlParams = new URLSearchParams(window.location.search);
-        const connectionPeerId = urlParams.get("peer_id");
-        
+        const connectionPeerId = urlParams.get("peer_id");      
+        urlParams.delete('peer_id');  
         
         if (connectionPeerId !== null) {
             connectToExistingPeer(connectionPeerId);
