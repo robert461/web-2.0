@@ -8,8 +8,6 @@
     var peer = null; // own peer object
     var connection = null;
 
-    var idInput = document.getElementById('peerjs-id-input');
-    var newPeerIdInput = document.getElementById('new-peer-id-input');
     var connectedToIdInput = document.getElementById('connected-to-id-input');
     var connectionIdInput = document.getElementById('connection-id-input');
 
@@ -21,6 +19,9 @@
     var closeConnectionButton = document.getElementById('close-connection-button');
     var writeToLocalStorageButton = document.getElementById('write-local-storage-button');
     var syncToLocalStorageButton = document.getElementById('sync-local-storage-button');
+    var charsIconsSwitchButton = document.getElementById('chars-icons-switch-button');
+    var enterExistingIdButton = document.getElementById('enter-existing-id-button');
+    
 
     var newPeerIdModal = new bootstrap.Modal(document.getElementById('enterNewPeerIdModal'));
     var acceptIncomingConnectionModal = new bootstrap.Modal(document.getElementById('acceptIncomingConnectionModal'));
@@ -32,6 +33,9 @@
     var connectToastText = document.getElementById('connect-toast-text');
     var disconnectToastText = document.getElementById('disconnect-toast-text');
     var syncLocalStorageText = document.getElementById('sync-local-storage-toast-text');
+    var idSpan = document.getElementById('id-span');
+
+    var enterPeerIdModalContent = document.getElementById('enter-peer-id-modal-content');
 
     var toastElementList = [].slice.call(document.querySelectorAll('.toast'))
     var toastList = toastElementList.map(function (toastElement) {
@@ -45,6 +49,24 @@
 
     var currentConnectionAccepted = false;
 
+    var useCustomId = false;
+    var customIdCharacters = [
+        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 
+        't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L',
+        'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '4', 
+        '5', '6', '7', '8', '9'];
+    var customIdIcons = [
+        'ambulance', 'anchor', 'angry', 'apple-alt', 'beer', 'bell', 'bone', 'bread-slice', 'bus', 'car', 
+        'car-side', 'cat', 'chess-knight', 'cocktail', 'coffee', 'crow', 'dizzy', 'dog', 'dove', 'dragon', 
+        'feather', 'fish', 'flushed', 'frog', 'frown', 'gas-pump', 'ghost', 'grimace', 'grin', 'grin-beam', 
+        'grin-squint', 'grin-squint-tears', 'grin-tears', 'grin-tongue', 'grin-tongue-wink', 'hamburger', 
+        'hand-point-left', 'hand-point-right', 'handshake', 'heart', 'hippo', 'horse', 'ice-cream', 'kiss', 
+        'kiwi-bird', 'laugh-wink', 'meh', 'meh-blank', 'meh-rolling-eyes', 'motorcycle', 'otter', 'paw', 
+        'phone', 'pizza-slice', 'smile', 'spider', 'surprise', 'thumbs-down', 'thumbs-up', 'truck', 
+        'wheelchair', 'wine-bottle']
+
+    var enteredEmojiCharacters = '';
+
 
     function initialize() {
         getNewPeer();
@@ -55,7 +77,7 @@
     function handleUrlQueryParams() {
         const urlParams = new URLSearchParams(window.location.search);
         const connectionPeerId = urlParams.get("peer_id");
-        console.log(connectionPeerId);
+        
         if (connectionPeerId !== null) {
             connectToExistingPeer(connectionPeerId);
         }
@@ -70,7 +92,8 @@
             host: peerJsHost,
             port: peerJsPort,
             path: peerJsPath,
-            debug: 2
+            debug: 2,
+            useCustomId: useCustomId,
         });
 
         setPeerListeners(peer);
@@ -112,7 +135,7 @@
 
         currentlyHandledConnection = newConnection;
 
-        acceptIncomingConnectionText.innerHTML = `Accept connection with ${newConnection.peer}?`;
+        acceptIncomingConnectionText.innerHTML = `Accept connection with <br>${getIdAsHtmlContent(newConnection.peer)}?`;
         acceptIncomingConnectionModal.show();
     }
 
@@ -126,7 +149,7 @@
                 lastPeerId = peer.id;
             }
 
-            idInput.value = `${peer.id}`;
+            idSpan.innerHTML = getIdAsHtmlContent(peer.id);
             generateQRCode();
             handleUrlQueryParams();
         });
@@ -225,9 +248,29 @@
         submitNewPeerIdButton.addEventListener('click', function () {
             newPeerIdModal.hide();
 
-            const peerId = newPeerIdInput.value;
+            let peerId = '';
+
+            if (useCustomId) {
+                peerId = enteredEmojiCharacters;
+            } else {
+                const newPeerIdInput = document.getElementById('new-peer-id-input');
+                peerId = newPeerIdInput.value;
+            }
 
             connectToExistingPeer(peerId);
+        });
+
+        enterExistingIdButton.addEventListener('click', function () {
+
+            if (useCustomId) {
+
+                buildEmojiKeyboard();
+
+            } else {
+                const content = '<input type="text" class="form-control" id="new-peer-id-input" placeholder="00000000-0000-0000-0000-000000000000">';
+                enterPeerIdModalContent.innerHTML = content;
+            }
+
         });
 
         acceptIncomingConnectionButton.addEventListener('click', function () {
@@ -290,6 +333,55 @@
                 syncLocalStorageText.innerHTML = `Synced local storage with ${connection.peer}.`;
                 toastList[2].show();
             }
+        });
+
+        charsIconsSwitchButton.addEventListener('click', function () {
+            useCustomId = !useCustomId;
+
+            getNewPeer();
+        });
+    }
+
+    function buildEmojiKeyboard() {
+        let content = '';
+
+        content += '\
+            <div class="card">\
+                <div class="card-body">\
+                    <span class="card-text" id="entered-id-span"></span>\
+                </div>\
+            </div>';
+
+        content += '<div class="row row-cols-5">';
+
+        customIdCharacters.forEach(c => {
+            content += '<div class="col">';
+            content += '<button type="button" class="btn btn-secondary my-1" name="emojiKeyboardButton" style="width: 5rem">';
+            content += getIconFromCharacter(c);
+            content += '</button>';
+            content += '</div>'
+        });
+
+        content += '</div>';
+
+        enteredEmojiCharacters = '';
+
+        enterPeerIdModalContent.innerHTML = content;
+
+        const enteredIdSpan = document.getElementById('entered-id-span');
+        enteredIdSpan.innerHTML = " ";
+
+        const keyboardButtons = document.getElementsByName('emojiKeyboardButton');
+
+        keyboardButtons.forEach(kb => {
+
+            const character = kb.children[0].attributes.getNamedItem('char').nodeValue;
+
+            kb.addEventListener('click', function () {
+                enteredEmojiCharacters += character;
+
+                enteredIdSpan.innerHTML = getIdAsHtmlContent(enteredEmojiCharacters);
+            });
         });
     }
 
@@ -388,10 +480,38 @@
             correctLevel : QRCode.CorrectLevel.H
         });
     }
+
     function generateQRCode() {
         const currentUrl = window.location.href.split('?')[0]
         qrcode.clear()
         qrcode.makeCode(currentUrl +"?peer_id=" +peer.id)
+    }
+
+    function getIdAsHtmlContent(id) {
+
+        if (useCustomId) {
+            const characters = [...id];
+
+            let icons = '';
+
+            characters.forEach(c => {
+                const icon = getIconFromCharacter(c);
+
+                icons += icon;
+            });
+
+            return icons;
+        }
+
+        return `${peer.id}`;
+    }
+
+    function getIconFromCharacter(character) {
+        const characterIndex = customIdCharacters.indexOf(character);
+
+        var icon = `<i class="fas fa-${customIdIcons[characterIndex]} fa-2x px-2" char="${character}"></i>`;
+        
+        return icon;
     }
 
     initialize();

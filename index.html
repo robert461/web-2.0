@@ -12,42 +12,30 @@
         <link rel="stylesheet" href="style.css">
     </head>
     <body>
-		<div class="container">
-			<h1 class="pt-5" style="text-align: center;">PearShare</h1>
+		<div class="container pt-3">
+			<div class="row justify-content-center">
+				<div class="col-auto">
+					<h1 class="pt-5" style="text-align: center;">PearShare</h1>
+				</div>
+	
+				<div class="col-auto">
+					<div id="qrcode"></div>
+				</div>
+			</div>
 
 			<div class="row pt-5">
 				<div class="col-2" style="display: flex; justify-content: center; align-items: center;">
 					<span><b>ID:</b></span>
 				</div>
 
-				<div class="col-5">
-					<input type="text" id="peerjs-id-input" class="form-control" placeholder="could not get id from brokering server" readonly>
-				</div>
-
 				<div class="col-auto">
-					<button class="btn btn-warning" id="status-button" disabled>
-						<i class="fas fa-exclamation-circle"></i>
-						Waiting
-					</button>
-				</div>
-
-				<div class="col-auto">
-					<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#enterNewPeerIdModal">
-						<i class="fas fa-edit"></i>
-						Enter Id
-					</button>
-				</div>
-
-				<div class="col-auto">
-					<button class="btn btn-primary" id="new-id-button">
-						<i class="fas fa-sync"></i>
-						New Id
-					</button>
-				</div>
-        <div class="col-auto">
-          <div id="qrcode"></div>
-        </div>
-			</div>
+					<div class="card">
+						<div class="card-body">
+							<span class="card-text" id="id-span"></span>
+						</div>
+					</div>
+				</div>				
+			</div>			
 
 			<div class="row pt-2">
 				<div class="col-2" style=" display: flex; justify-content: center; align-items: center;">
@@ -56,14 +44,7 @@
 
 				<div class="col-5">
 					<input type="text" id="connected-to-id-input" class="form-control" placeholder="not connected" readonly>
-				</div>
-
-				<div class="col-auto">
-					<button class="btn btn-primary" id="close-connection-button">
-						<i class="fas fa-times"></i>
-						Close connection
-					</button>
-				</div>
+				</div>				
 			</div>
 
 			<div class="row pt-2">
@@ -79,15 +60,49 @@
 			<hr>
 
 			<div class="row">
-				<div class="col-3">
+				<div class="col-auto">
+					<button class="btn btn-warning" id="status-button" disabled>
+						<i class="fas fa-exclamation-circle"></i>
+						Waiting
+					</button>
+				</div>
+
+				<div class="col-auto">
+					<button type="button" class="btn btn-primary" id="enter-existing-id-button" data-bs-toggle="modal" data-bs-target="#enterNewPeerIdModal">
+						<i class="fas fa-edit"></i>
+						Enter Id
+					</button>
+				</div>
+
+				<div class="col-auto">
+					<button class="btn btn-primary" id="new-id-button">
+						<i class="fas fa-sync"></i>
+						New Id
+					</button>
+				</div>
+
+				<div class="col-auto">
+					<button class="btn btn-primary" id="close-connection-button">
+						<i class="fas fa-times"></i>
+						Close connection
+					</button>
+				</div>
+
+				<div class="col-auto">
 					<button class="btn btn-primary" id="write-local-storage-button">
 						Write data to local storage
 					</button>
 				</div>
 
-				<div class="col-3">
+				<div class="col-auto">
 					<button class="btn btn-primary" id="sync-local-storage-button">
 						Sync local storage data
+					</button>
+				</div>
+
+				<div class="col-auto">
+					<button class="btn btn-primary" id="chars-icons-switch-button">
+						Chars <i class="fas fa-exchange-alt px-2"></i> Icons
 					</button>
 				</div>
 			</div>
@@ -100,7 +115,7 @@
 						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 					</div>
 					<div class="modal-body">
-						<input type="text" class="form-control" id="new-peer-id-input" placeholder="00000000-0000-0000-0000-000000000000">
+						<div id="enter-peer-id-modal-content"></div>
 					</div>
 					<div class="modal-footer">
 						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
