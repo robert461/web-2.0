@@ -5,5 +5,5 @@ Repository für das Web 2.0 Projekt der Gruppe 3
 
 ## Usage
 
-1. index.js: add a valid PeerJS-Server in line 3 ```var peerJsHost = "<your PeerJS Server>";```
-2. open index.html
+1. Add a valid PeerJS-Server, see index.js (line 3): ```var peerJsHost = "<your PeerJS Server>";```
+2. Open index.html in the browser
