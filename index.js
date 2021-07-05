@@ -32,7 +32,8 @@
     var acceptIncomingConnectionText = document.getElementById('accept-incoming-connection-text');
     var connectToastText = document.getElementById('connect-toast-text');
     var disconnectToastText = document.getElementById('disconnect-toast-text');
-    var syncLocalStorageText = document.getElementById('sync-local-storage-toast-text');
+    var syncSuccessfullText = document.getElementById('sync-successfull-toast-text');
+    var syncFailedText = document.getElementById('sync-failed-toast-text');
     var idSpan = document.getElementById('id-span');
 
     var enterPeerIdModalContent = document.getElementById('enter-peer-id-modal-content');
@@ -338,9 +339,17 @@
 
                 sendDataMessage('localStorage', window.localStorage);
 
+                // TODO Toasts zeigen wenn Daten empfangen und gespeichert wurden und wenn Daten versendet und bestätigt wurden
+
+                const storageType = 'local storage';
+
                 toastList[2].hide();
-                syncLocalStorageText.innerHTML = `Synced local storage with ${connection.peer}.`;
+                syncSuccessfullText.innerHTML = `Synced ${storageType} with ${connection.peer}.`;
                 toastList[2].show();
+
+                toastList[3].hide();
+                syncFailedText.innerHTML = `Failed to sync ${storageType} with ${connection.peer}.`;
+                toastList[3].show();
             }
         });
 
