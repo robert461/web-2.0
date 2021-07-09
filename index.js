@@ -21,7 +21,9 @@
     var syncToLocalStorageButton = document.getElementById('sync-local-storage-button');
     var charsIconsSwitchButton = document.getElementById('chars-icons-switch-button');
     var enterExistingIdButton = document.getElementById('enter-existing-id-button');
-    
+    var writeToIndexedDBButton = document.getElementById('write-indexedDB-button')
+    var loadFromIndexedDBButton = document.getElementById('load-indexedDB-button')
+
 
     var newPeerIdModal = new bootstrap.Modal(document.getElementById('enterNewPeerIdModal'));
     var acceptIncomingConnectionModal = new bootstrap.Modal(document.getElementById('acceptIncomingConnectionModal'));
@@ -69,6 +71,98 @@
         'wheelchair', 'wine-bottle']
 
     var enteredEmojiCharacters = '';
+
+    if (!window.indexedDB) {
+    	alert("IndexedDB wird nicht unterstützt!");
+    }
+
+    var db;
+    var request = indexedDB.open("pearShareDB", 1);
+
+    request.onupgradeneeded = function(event){
+    	db = event.target.result;
+
+    	var notes = db.createObjectStore('idStorage', {autoIncrement: true});
+    }
+
+    request.onsuccess = function(event){
+        db = event.target.result;
+    }
+
+    request.onerror = function(event){
+        alert('Error while connecting to IndexedDB: ' + event.target.errorCode);
+    }
+
+
+    function storeIDinIndexedDB(db, message){
+        var transaction = db.transaction(['idStorage'], 'readwrite');
+        var storage = transaction.objectStore('idStorage');
+
+        var id = {text: message, timestamp: Date.now()};
+        storage.add(id);
+
+        transaction.oncomplete = function(){
+            alert('ID: ' + message + 'saved');
+        }
+        transaction.onerror = function(){
+            alert('Error while saving: ' + event.target.errorcode);
+        }
+    }
+
+    writeToIndexedDBButton.addEventListener('click', function () {
+        var message = document.getElementById('connected-to-id-input');
+        storeIDinIndexedDB(db, message.value);
+        message.value = '';
+    });
+
+
+    function loadAllIDs(db) {
+    	var transaction = db.transaction(['idStorage'], 'readonly');
+    	var storage = transaction.objectStore('idStorage');
+
+    	var req = storage.openCursor();
+    	var allMessages = [];
+
+    	req.onsuccess = function(event) {
+    		var cursor = event.target.result;
+
+    		if(cursor != null){
+    			allMessages.push(cursor.value);
+    			cursor.continue();
+    		}
+    		else{
+    			displayMessages(allMessages);
+    		}
+    	}
+
+    	req.onerror = function(event) {
+    		alert('Error while loading messages: ' + event.target.errorCode);
+    	}
+    }
+
+    function displayMessages(ids){
+    	var listHTML = '<hr><span><b>Previously used IDs:</b></span><ul>';
+    	for(var x = 0; x < ids.length; x++){
+    		var id = ids[x];
+    		listHTML += '<li> ID: ' + id.text + ', Used on: ' +
+    			new Date(id.timestamp).toString() + '</li>';
+    	}
+    	document.getElementById('messages').innerHTML = listHTML;
+    }
+
+    var allIDsHidden = true;
+    loadFromIndexedDBButton.addEventListener('click', function () {
+        if(allIDsHidden){
+            loadAllIDs(db);
+            loadFromIndexedDBButton.firstChild.data = "Hide saved IDs";
+            allIDsHidden = false;
+        }
+        else{
+            document.getElementById('messages').innerHTML = '';
+            loadFromIndexedDBButton.firstChild.data = "Show saved IDs";
+            allIDsHidden = true;
+        }
+    });
 
 
     function initialize() {
