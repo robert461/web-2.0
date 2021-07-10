@@ -485,9 +485,7 @@
         });
 
         writeToIndexedDBButton.addEventListener('click', function () {
-            var message = document.getElementById('connected-to-id-input');
-            storeIDinIndexedDB(indexedDb, message.value);
-            message.value = '';
+            storeIDinIndexedDB(indexedDb, connectedToIdInput.value);
         });
 
         syncIndexedDBButton.addEventListener('click', function () {
