@@ -93,6 +93,34 @@
 				</div>
 
 				<div class="col-auto">
+					<button class="btn btn-primary" id="chars-icons-switch-button">
+						Chars <i class="fas fa-exchange-alt px-2"></i> Icons
+					</button>
+				</div>
+			</div>
+
+			<div class="row pt-3">
+				<div class="col-auto">
+                    <button class="btn btn-primary" id="write-indexedDB-button">
+                        Write Connected ID to indexedDB
+                    </button>
+                </div>
+
+				<div class="col-auto">
+					<button class="btn btn-primary" id="sync-indexed-db-button">
+						Sync indexed db data
+					</button>
+				</div>
+
+				<div class="col-auto">
+					<button class="btn btn-primary" id="load-from-indexed-db-button">
+						Show data
+					</button>
+				</div>
+			</div>
+
+			<div class="row pt-3">
+				<div class="col-auto">
 					<button class="btn btn-primary" id="write-local-storage-button">
 						Write data to local storage
 					</button>
@@ -103,24 +131,6 @@
 						Sync local storage data
 					</button>
 				</div>
-
-				<div class="col-auto">
-					<button class="btn btn-primary" id="chars-icons-switch-button">
-						Chars <i class="fas fa-exchange-alt px-2"></i> Icons
-					</button>
-				</div>
-
-                <div class="col-auto">
-                    <button class="btn btn-primary" id="write-indexedDB-button">
-                        Write Connected ID to indexedDB
-                    </button>
-                </div>
-
-                <div class="col-auto">
-                    <button class="btn btn-primary" id="load-indexedDB-button">
-                        Show saved IDs
-                    </button>
-                </div>
 			</div>
 
             <div id = "messages">
@@ -188,7 +198,7 @@
 
 				<div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
 					<div class="toast-header bg-success text-light">
-						<strong class="me-auto">Successfully synced local storage</strong>
+						<strong class="me-auto">Successfully synced storage</strong>
 						<button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
 					</div>
 					<div class="toast-body">
@@ -197,12 +207,12 @@
 				</div>
 
 				<div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-					<div class="toast-header bg-danger text-light">
-						<strong class="me-auto">Failed to sync local storage</strong>
+					<div class="toast-header bg-success text-light">
+						<strong class="me-auto">Wrote to storage</strong>
 						<button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
 					</div>
 					<div class="toast-body">
-						<span id="sync-failed-toast-text"></span>
+						<span id="write-to-storage-toast-text"></span>
 					</div>
 				</div>
 			</div>

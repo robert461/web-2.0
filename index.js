@@ -1,6 +1,6 @@
 (function () {
 
-    var peerJsHost = "";
+    var peerJsHost = "ec2-18-195-162-139.eu-central-1.compute.amazonaws.com";
     var peerJsPort = "9000";
     var peerJsPath = "/myapp";
 
@@ -21,9 +21,9 @@
     var syncToLocalStorageButton = document.getElementById('sync-local-storage-button');
     var charsIconsSwitchButton = document.getElementById('chars-icons-switch-button');
     var enterExistingIdButton = document.getElementById('enter-existing-id-button');
-    var writeToIndexedDBButton = document.getElementById('write-indexedDB-button')
-    var loadFromIndexedDBButton = document.getElementById('load-indexedDB-button')
-
+    var writeToIndexedDBButton = document.getElementById('write-indexedDB-button');
+    var syncIndexedDBButton = document.getElementById('sync-indexed-db-button');
+    var loadFromIndexedDBButton = document.getElementById('load-from-indexed-db-button');
 
     var newPeerIdModal = new bootstrap.Modal(document.getElementById('enterNewPeerIdModal'));
     var acceptIncomingConnectionModal = new bootstrap.Modal(document.getElementById('acceptIncomingConnectionModal'));
@@ -35,7 +35,7 @@
     var connectToastText = document.getElementById('connect-toast-text');
     var disconnectToastText = document.getElementById('disconnect-toast-text');
     var syncSuccessfullText = document.getElementById('sync-successfull-toast-text');
-    var syncFailedText = document.getElementById('sync-failed-toast-text');
+    var writeToStorage = document.getElementById('write-to-storage-toast-text');
     var idSpan = document.getElementById('id-span');
 
     var enterPeerIdModalContent = document.getElementById('enter-peer-id-modal-content');
@@ -48,6 +48,7 @@
     var peerIdFromUrl = '';
 
     var qrcode;
+    var indexedDb;
 
     var unhandledIncomingConnections = [];
     var currentlyHandledConnection = undefined;
@@ -72,28 +73,6 @@
 
     var enteredEmojiCharacters = '';
 
-    if (!window.indexedDB) {
-    	alert("IndexedDB wird nicht unterstützt!");
-    }
-
-    var db;
-    var request = indexedDB.open("pearShareDB", 1);
-
-    request.onupgradeneeded = function(event){
-    	db = event.target.result;
-
-    	var notes = db.createObjectStore('idStorage', {autoIncrement: true});
-    }
-
-    request.onsuccess = function(event){
-        db = event.target.result;
-    }
-
-    request.onerror = function(event){
-        alert('Error while connecting to IndexedDB: ' + event.target.errorCode);
-    }
-
-
     function storeIDinIndexedDB(db, message){
         var transaction = db.transaction(['idStorage'], 'readwrite');
         var storage = transaction.objectStore('idStorage');
@@ -102,21 +81,32 @@
         storage.add(id);
 
         transaction.oncomplete = function(){
-            alert('ID: ' + message + 'saved');
+            toastList[3].hide();
+            writeToStorage.innerHTML = `Wrote to indexed db.`;
+            toastList[3].show();
         }
+        
         transaction.onerror = function(){
             alert('Error while saving: ' + event.target.errorcode);
-        }
+        }        
     }
 
-    writeToIndexedDBButton.addEventListener('click', function () {
-        var message = document.getElementById('connected-to-id-input');
-        storeIDinIndexedDB(db, message.value);
-        message.value = '';
-    });
+    function storeReceivedDataInIndexedDb(db, data) {
+        var transaction = db.transaction(['idStorage'], 'readwrite');
+        var storage = transaction.objectStore('idStorage');
 
+        data.forEach(d => {
+            storage.add(d);
+        });
 
-    function loadAllIDs(db) {
+        toastList[2].hide();
+        syncSuccessfullText.innerHTML = `Synced indexed db with ${connection.peer}.`;
+        toastList[2].show();
+
+        sendSyncSuccessfullMessage(connection.connectionId);
+    }
+
+    function loadAllIds(db) {
     	var transaction = db.transaction(['idStorage'], 'readonly');
     	var storage = transaction.objectStore('idStorage');
 
@@ -126,12 +116,11 @@
     	req.onsuccess = function(event) {
     		var cursor = event.target.result;
 
-    		if(cursor != null){
+    		if (cursor != null) {
     			allMessages.push(cursor.value);
     			cursor.continue();
-    		}
-    		else{
-    			displayMessages(allMessages);
+    		} else {
+                sendDataMessage('indexedDb', allMessages);
     		}
     	}
 
@@ -140,30 +129,41 @@
     	}
     }
 
-    function displayMessages(ids){
-    	var listHTML = '<hr><span><b>Previously used IDs:</b></span><ul>';
-    	for(var x = 0; x < ids.length; x++){
-    		var id = ids[x];
-    		listHTML += '<li> ID: ' + id.text + ', Used on: ' +
-    			new Date(id.timestamp).toString() + '</li>';
+    function displayMessages(db){
+        var transaction = db.transaction(['idStorage'], 'readonly');
+    	var storage = transaction.objectStore('idStorage');
+
+    	var req = storage.openCursor();
+    	var allMessages = [];
+
+    	req.onsuccess = function(event) {
+    		var cursor = event.target.result;
+
+    		if (cursor != null) {
+    			allMessages.push(cursor.value);
+    			cursor.continue();
+    		} else {
+                var listHTML = '<hr><span><b>Indexed DB:</b></span><ul>';
+                for(var x = 0; x < allMessages.length; x++){
+                    var id = allMessages[x];
+                    listHTML += '<li> ID:' + id.text + ', Used on: ' +
+                        new Date(id.timestamp).toString() + '</li>';
+                }
+
+                listHTML += '</ul>';
+                listHTML += '<hr><span><b>local storage:</b></span><ul>';
+
+                listHTML += '<li> ' + JSON.stringify(window.localStorage) + '</id>';
+                listHTML += '</ul>';
+
+                document.getElementById('messages').innerHTML = listHTML;
+    		}
     	}
-    	document.getElementById('messages').innerHTML = listHTML;
+
+    	req.onerror = function(event) {
+    		alert('Error while loading messages: ' + event.target.errorCode);
+    	}
     }
-
-    var allIDsHidden = true;
-    loadFromIndexedDBButton.addEventListener('click', function () {
-        if(allIDsHidden){
-            loadAllIDs(db);
-            loadFromIndexedDBButton.firstChild.data = "Hide saved IDs";
-            allIDsHidden = false;
-        }
-        else{
-            document.getElementById('messages').innerHTML = '';
-            loadFromIndexedDBButton.firstChild.data = "Show saved IDs";
-            allIDsHidden = true;
-        }
-    });
-
 
     function initialize() {
         const urlParams = new URLSearchParams(window.location.search);
@@ -177,7 +177,30 @@
         getNewPeer();
         addElementEventListeners();
         initQRCode();
+        initIndexedDb();
     };
+
+    function initIndexedDb() {
+        if (!window.indexedDB) {
+            alert("IndexedDB wird nicht unterstützt!");
+        }    
+        
+        var request = indexedDB.open("pearShareDB", 1);
+    
+        request.onupgradeneeded = function(event){
+            indexedDb = event.target.result;
+    
+            indexedDb.createObjectStore('idStorage', {autoIncrement: true});
+        }
+    
+        request.onsuccess = function(event){
+            indexedDb = event.target.result;
+        }
+    
+        request.onerror = function(event){
+            alert('Error while connecting to IndexedDB: ' + event.target.errorCode);
+        }
+    }
 
     function handleUrlQueryParams() {
         
@@ -305,6 +328,12 @@
                     }
 
                 } else {
+                    if (message.messageType === 'sync-success') {
+                        toastList[2].hide();
+                        syncSuccessfullText.innerHTML = `Successfully synced with ${connection.peer}.`;
+                        toastList[2].show();
+                    }
+
                     if (message.hasOwnProperty('data')) {
                         switch(message.messageType) {
                             case 'localStorage':
@@ -314,7 +343,19 @@
                                     localStorage.setItem(`${item}`, localStorageItems[item]);
                                 }
 
+                                sendSyncSuccessfullMessage(connection.connectionId);
+
+                                toastList[2].hide();
+                                syncSuccessfullText.innerHTML = `Synced local storage with ${connection.peer}.`;
+                                toastList[2].show();
+
                                 break;
+
+                            case 'indexedDb':
+                                indexedDbItems = JSON.parse(message.data);
+
+                                storeReceivedDataInIndexedDb(indexedDb, indexedDbItems);
+
                             default:
                                 break;
                         }
@@ -425,25 +466,15 @@
         writeToLocalStorageButton.addEventListener('click', function () {
             localStorage.setItem('Web 2.0', `Projekt ${Date.now()}`);
             localStorage.setItem('Lorem ipsum', `${Math.random()}`);
+
+            toastList[3].hide();
+            writeToStorage.innerHTML = `Wrote to local storage.`;
+            toastList[3].show();
         });
 
         syncToLocalStorageButton.addEventListener('click', function () {
             if (connection && connection.open) {
-                localStorageString = JSON.stringify(window.localStorage);
-
                 sendDataMessage('localStorage', window.localStorage);
-
-                // TODO Toasts zeigen wenn Daten empfangen und gespeichert wurden und wenn Daten versendet und bestätigt wurden
-
-                const storageType = 'local storage';
-
-                toastList[2].hide();
-                syncSuccessfullText.innerHTML = `Synced ${storageType} with ${connection.peer}.`;
-                toastList[2].show();
-
-                toastList[3].hide();
-                syncFailedText.innerHTML = `Failed to sync ${storageType} with ${connection.peer}.`;
-                toastList[3].show();
             }
         });
 
@@ -451,6 +482,32 @@
             useCustomId = !useCustomId;
 
             getNewPeer();
+        });
+
+        writeToIndexedDBButton.addEventListener('click', function () {
+            var message = document.getElementById('connected-to-id-input');
+            storeIDinIndexedDB(indexedDb, message.value);
+            message.value = '';
+        });
+
+        syncIndexedDBButton.addEventListener('click', function () {
+            if (connection && connection.open) {
+                loadAllIds(indexedDb);
+            }
+        });
+
+        var allIDsHidden = true;
+        loadFromIndexedDBButton.addEventListener('click', function () {
+            if(allIDsHidden){
+                displayMessages(indexedDb);
+                loadFromIndexedDBButton.firstChild.data = "Hide saved IDs";
+                allIDsHidden = false;
+            }
+            else{
+                document.getElementById('messages').innerHTML = '';
+                loadFromIndexedDBButton.firstChild.data = "Show saved IDs";
+                allIDsHidden = true;
+            }
         });
     }
 
@@ -517,6 +574,13 @@
         const message = {messageType: 'decline', connectionId: currentConnection.connectionId}
 
         currentConnection.send(message);
+    }
+
+    function sendSyncSuccessfullMessage(connectionId) {
+
+        const message = {messageType: 'sync-success', connectionId: connectionId}
+
+        connection.send(message);
     }
 
     function setStatusToWaiting() {
