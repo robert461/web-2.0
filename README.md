@@ -13,3 +13,11 @@ Repository für das Web 2.0 Projekt der Gruppe 3
 6. Add the peerjs.min.js you built in step 2 into the assets folder.
 7. Set the address of the docker container you deployed in step 4 in the index.js file.
 8. Open the index.html file.
+
+
+## Usage
+
+- To connect to another Peer: Click on 'Enter ID' and enter the Id of the other Peer
+- To use Emojis Ids instead of UUIDs: Click on 'Chars <-> Icons'
+- Use the sync buttons to sync a storage
+- 'New ID' generates a new Peer ID
